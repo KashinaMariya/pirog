@@ -1,0 +1,51 @@
+from telegram.ext import Updater                                         # Импорт библиотек 
+import json                                                       # для работы с Телеграм
+import telebot                                                           # с Телеграм
+import requests
+bot = telebot.TeleBot('%ваш токен%');
+updater = Updater(token='961402967:AAGfmLgCVfejUgfSu_ed_IK9F33vz4f3uxE') # Токен API к Telegram
+dispatcher = updater.dispatcher #
+
+def get_start(message): # функция начала общения с пользователем
+    bot.send_message(message.from_user.id, text='Привет, расскажи немного о себе!')
+    bot.send_message(message.from_user.id, "Как тебя зовут?");
+    bot.register_next_step_handler(message, get_Name); # переход к следующему сообщению
+    
+def get_Name(message): # функция записи имени и запроса фамилии пользователя
+    global Name;
+    Name = message.text; # запись имени в переменную
+    bot.send_message(message.from_user.id, 'Какая у тебя фамилия?');
+    bot.register_next_step_handler(message, get_Surname); # переход к следующему сообщению
+
+def get_Surname(message): # функция записи фамилии и запроса возраста пользователя
+    global Surname;
+    Surname = message.text; # запись фамилии в переменную
+    bot.send_message(message.from_user.id, 'Сколько тебе лет?');
+    bot.register_next_step_handler(message, get_Age); # переход к следующему сообщению
+
+def get_Age(message): # функция записи возраста и запроса места проживания пользователя
+    global Age;
+    Age = message.text;     # запись возраста в переменную
+    bot.send_message(message.from_user.id, 'Откуда ты?');
+    bot.register_next_step_handler(message, get_City); # переход к следующему сообщению
+     
+def get_City(message): # функция записи места проживания
+    global City;
+    City = message.text; # запись места проживания в переменную
+
+def user(): # функция сбора json карточки пациента и отправки его на сервер
+    data1 = (Name, Surname, Age, City) #
+    user = json.dumps(data1) # сбор json
+    re=requests.post("https://frozen-journey-76898.herokuapp.com/api/v1/chlamidia", data=user)  # отправка json по url на сервер      
+         
+def textMessage(bot, update): # функция общения сервера с пользователем и обработка результатов
+    while requests != 'cards': #
+        request = requests.get('https://frozen-journey-76898.herokuapp.com').json() # получение вопросов от сервера
+        text = json.loads(request.getresponse().read().decode('utf-8')) # парсинг json
+        bot.send_message(chat_id=update.message.chat_id, text=text) # отправка разобраного вопроса пользователю
+        otvet = bot.register_next_step_handler(message, get_Age) # запись ответа пользователя в переменную
+        otvet1= json.dumps(otvet) # сбор json ответа пользователя
+        requests.post("https://frozen-journey-76898.herokuapp.com/api/v1/chlamidia", data=otvet1) # отправка json ответа серверу от пользователя
+           
+updater.start_polling() # поддержание постоянной работы бота
+updater.idle()
